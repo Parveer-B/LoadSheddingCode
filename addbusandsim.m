@@ -3,10 +3,10 @@ function totalloss = addbusandsim(mpc, removedbuses, cutlines, toaddsequence)
 %If this doesn't work out, you can easily just remove the unused buses from
 %the original mpc
 
-
+define_constants;
 mpc.bus = [mpc.bus; removedbuses(ismember(removedbuses(:,1), toaddsequence), :)]; %add buses in our sequence to the mpc
 unusedbuses = setdiff(removedbuses(:,1), toaddsequence); %get all unsued buses
-mpc.branches = [mpc.branches; cutlines(~ismember(cutlines(:, F_BUS), unusedbuses) & ~ismember(cutlines(:, T_BUS), unusedbuses), :)];
+mpc.branch = [mpc.branch; cutlines(~ismember(cutlines(:, F_BUS), unusedbuses) & ~ismember(cutlines(:, T_BUS), unusedbuses), :)];
 %add newly connected branches to the mpc
 
 %get islands as before using python
@@ -23,8 +23,8 @@ end
 
 totalshed = 0; %calculate load shed of each island
 for j=1:size(islands,1)
-    mpc = getislandmpc(mpc,islands{j});
-    resulti = addloadshedding(mpc);
+    sim = getislandmpc(mpc,islands{j});
+    resulti = addloadshedding(sim);
     resultt = resulti.x;
     numbuses = size(resulti.bus,1);
     totalshed = totalshed + 100*sum(resultt(end-numbuses+1:end));
