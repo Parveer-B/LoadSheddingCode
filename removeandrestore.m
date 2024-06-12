@@ -91,19 +91,18 @@ totalloss = totalshed + totalknockedout;
 %Do bus restoration here
 %This section will be the n buses then greedy approach
 
-tic
-[allsequences1, bestsequence1, cost1] = ngreedy(1, mpc, removedbuses, cutlines, totalloss);
 
-elsapedtime1 = toc;
+[allsequences1, bestsequence1, cost1] = ngreedywrestorebsdmockcost(1, mpc, removedbuses, cutlines, totalloss);
 
-tic
-[allsequences2, bestsequence2, cost2] = ngreedy(2, mpc, removedbuses, cutlines, totalloss);
+[allsequences2, bestsequence2, cost2] = ngreedywrestorebsdmockcost(2, mpc, removedbuses, cutlines, totalloss);
 
-elsapedtime2 = toc;
+[allsequences5, bestsequence5, cost5] = ngreedywrestorebsdmockcost(5, mpc, removedbuses, cutlines, totalloss);
 
-diff = isequal(bestsequence1,bestsequence2);
 
-outputstruct = struct('allseq1', [] , 'seq1', bestsequence1, 'cost1', cost1, 'time1', elsapedtime1, 'allseq2', [], 'seq2', bestsequence2, 'cost2', cost2, 'time2', elsapedtime2, 'diff', diff);
+diff = isequal(bestsequence1,bestsequence2, bestsequence5);
+
+outputstruct = struct('allseq1', [] , 'seq1', bestsequence1, 'cost1', cost1, 'allseq2', [], 'seq2', bestsequence2, 'cost2', cost2, 'allseq5', [], 'seq5', bestsequence5, 'cost5', cost5,'diff', diff);
 outputstruct(1).allseq1 = allsequences1;
 outputstruct(1).allseq2 = allsequences2;
+outputstruct(1).allseq5 = allsequences5;
 end
