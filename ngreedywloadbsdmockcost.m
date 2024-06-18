@@ -72,7 +72,7 @@ for j=1:size(cursequences, 1)
     end
 end
 allsequences{end} = newsequences;
-sequencecosts = [newsequences.mockcost];
+sequencecosts = [newsequences.cost];
 [~, idx] = min(sequencecosts);
 cursequence = newsequences(idx);
 newsequences = 0;

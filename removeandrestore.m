@@ -44,7 +44,7 @@ for i=1:buses_to_remove
     removedbuses = [removedbuses; mpc.bus(rowtoremove,:)];
     mpc.bus(rowtoremove,:) = [];      
 end    
-    
+
 branchespy = py.numpy.array(mpc.branch(:,1:2));
 buslist = py.numpy.array(mpc.bus(:,1));
 islanding = py.islanding.test_islanding(branchespy, buslist);
@@ -91,18 +91,20 @@ totalloss = totalshed + totalknockedout;
 %Do bus restoration here
 %This section will be the n buses then greedy approach
 
-
+tic
 [allsequences1, bestsequence1, cost1] = ngreedywrestorebsdmockcost(1, mpc, removedbuses, cutlines, totalloss);
+time1 = toc;
+tic
+[allsequences2, bestsequence2, cost2] = keepnwrestorebsdmockcost(5, mpc, removedbuses, cutlines, totalloss);
+time2 = toc;
+tic
+[allsequences3, bestsequence3, cost3] = closecostwrestorebsdmockcost(0.01, mpc, removedbuses, cutlines, totalloss);
+time3 = toc;
 
-[allsequences2, bestsequence2, cost2] = ngreedywrestorebsdmockcost(2, mpc, removedbuses, cutlines, totalloss);
+diff = isequal(bestsequence1,bestsequence2, bestsequence3);
 
-[allsequences5, bestsequence5, cost5] = ngreedywrestorebsdmockcost(5, mpc, removedbuses, cutlines, totalloss);
-
-
-diff = isequal(bestsequence1,bestsequence2, bestsequence5);
-
-outputstruct = struct('allseq1', [] , 'seq1', bestsequence1, 'cost1', cost1, 'allseq2', [], 'seq2', bestsequence2, 'cost2', cost2, 'allseq5', [], 'seq5', bestsequence5, 'cost5', cost5,'diff', diff);
+outputstruct = struct('allseq1', [] , 'seq1', bestsequence1, 'cost1', cost1, 'time1', time1, 'allseq2', [], 'seq2', bestsequence2, 'cost2', cost2, 'time2', time2, 'allseq3', [], 'seq3', bestsequence3, 'cost3', cost3, 'time3', time3, 'diff', diff);
 outputstruct(1).allseq1 = allsequences1;
 outputstruct(1).allseq2 = allsequences2;
-outputstruct(1).allseq5 = allsequences5;
+outputstruct(1).allseq3 = allsequences3;
 end
