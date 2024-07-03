@@ -3,7 +3,7 @@ function [allsequences,bestsequence,cost] = ngreedywloadbsdmockcost(n,mpc,remove
 %restoration times
 define_constants;
 %create a struct of the sequences for the current iteration
-cursequences = repmat(struct('sequence', [], 'cost', 0, 'mockcost' ,0, 'lossafteriter', origloss, 'totalrestored', 0, 'iterrestored', 0), 1, 1);
+cursequences = repmat(struct('sequence', [], 'cost', 0, 'mockcost' ,0, 'lossafteriter', origloss, 'totalrestored', 0, 'iterrestored', 0, 'totaltime', 0), 1, 1);
 %create a struct of the sequences for the next iteration
 allsequences = cell(size(removedbuses, 1), 1);
 newsequences = 0;
@@ -15,10 +15,13 @@ for i=1:min(n, size(removedbuses, 1)-1)
                 lossafteriter = addbusandsim(mpc, removedbuses, cutlines, toaddsequence); %get total loss of buses using this sequence
                 lines1 = size(cutlines(cutlines(:, T_BUS) == removedbuses(k, 1), :), 1);
                 lines2 = size(cutlines(cutlines(:, F_BUS) == removedbuses(k, 1), :), 1);
+                iterrestored = cursequences(j).lossafteriter - lossafteriter;
+                totalrestored = origloss - lossafteriter;
+                totaltime = cursequences(j).totaltime + lines1 + lines2;
                 if isa(newsequences, 'double') %create newsequence on first go through. Please find a better way to do this
-                    newsequences = struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2),'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', cursequences(j).lossafteriter - lossafteriter);
+                    newsequences = struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2),'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', iterrestored, 'totaltime', totaltime);
                 else %append to newsequences
-                    newsequences = [newsequences; struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', cursequences(j).lossafteriter - lossafteriter)];
+                    newsequences = [newsequences; struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', totalrestored, 'iterrestored', iterrestored, 'totaltime', totaltime)];
                 end
             end
         end
@@ -43,18 +46,27 @@ for i=n+1:size(removedbuses, 1)-1
             lossafteriter = addbusandsim(mpc, removedbuses, cutlines, toaddsequence);
             lines1 = size(cutlines(cutlines(:, T_BUS) == removedbuses(j, 1), :), 1);
             lines2 = size(cutlines(cutlines(:, F_BUS) == removedbuses(j, 1), :), 1);
+            iterrestored = cursequences.lossafteriter - lossafteriter;
+            totaltime = cursequences.totaltime + lines1 + lines2;
+            totalrestored = origloss - lossafteriter;
             if isa(newsequences, 'double')
-                newsequences = struct('sequence', toaddsequence, 'cost', cursequences.cost + cursequences.lossafteriter*(lines1 + lines2), 'mockcost', cursequences.mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', cursequences.lossafteriter - lossafteriter);
+                newsequences = struct('sequence', toaddsequence, 'cost', cursequences.cost + cursequences.lossafteriter*(lines1 + lines2), 'mockcost', cursequences.mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', totalrestored, 'iterrestored', iterrestored, 'totaltime', totaltime);
             else
-                newsequences = [newsequences; struct('sequence', toaddsequence, 'cost', cursequences.cost + cursequences.lossafteriter*(lines1 + lines2), 'mockcost', cursequences.mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', cursequences.lossafteriter - lossafteriter)];
+                newsequences = [newsequences; struct('sequence', toaddsequence, 'cost', cursequences.cost + cursequences.lossafteriter*(lines1 + lines2), 'mockcost', cursequences.mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', totalrestored, 'iterrestored', iterrestored, 'totaltime', totaltime)];
             end
         end
     end
-    allsequences{i} = newsequences;
-    sequencecosts = [newsequences.mockcost];
-    [~, idx] = min(sequencecosts);
-    cursequences = newsequences(idx);
-    newsequences = 0;
+    if i==size(removedbuses, 1)-1 %if it's the second last iter, just keep all of them, we aren't running more sims
+         allsequences{i} = newsequences;
+         cursequences = newsequences;
+         newsequences = 0;
+    else
+        allsequences{i} = newsequences;
+        sequencecosts = [newsequences.mockcost];
+        [~, idx] = min(sequencecosts);
+        cursequences = newsequences(idx);
+        newsequences = 0;
+    end
 end
 
 
@@ -65,10 +77,13 @@ for j=1:size(cursequences, 1)
     lines1 = size(cutlines(cutlines(:, T_BUS) == bustoadd, :), 1);
     lines2 = size(cutlines(cutlines(:, F_BUS) == bustoadd, :), 1);
     lossafteriter = 0;
+    iterrestored = cursequences(j).lossafteriter - lossafteriter;
+    totaltime = cursequences(j).totaltime + lines1 + lines2;
+    totalrestored = origloss - lossafteriter;
     if isa(newsequences, 'double')
-        newsequences = struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', cursequences(j).lossafteriter - lossafteriter);
+        newsequences = struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', totalrestored, 'iterrestored', iterrestored, 'totaltime', totaltime);
     else
-        newsequences = [newsequences; struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', origloss - lossafteriter, 'iterrestored', cursequences(j).lossafteriter - lossafteriter)];
+        newsequences = [newsequences; struct('sequence', toaddsequence, 'cost', cursequences(j).cost + cursequences(j).lossafteriter*(lines1 + lines2), 'mockcost', cursequences(j).mockcost +  lossafteriter*(lines1 + lines2), 'lossafteriter', lossafteriter, 'totalrestored', totalrestored, 'iterrestored', iterrestored, 'totaltime', totaltime)];
     end
 end
 allsequences{end} = newsequences;
