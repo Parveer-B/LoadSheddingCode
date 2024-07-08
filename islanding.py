@@ -59,8 +59,6 @@ def test_islanding(branches, buslist):
 #buslist = np.array([1,2,3,4,5,6,7])
 #branches = np.array([[1,4], [5,1], [4,6], [6, 5], [2, 7], [3, 7], [3, 2]])
 
-buslist = np.array([1,2,3,4])
-branches = np.array([1, 3])
 
-print(test_islanding(branches, buslist))
+#print(test_islanding(branches, buslist))
 
