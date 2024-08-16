@@ -6,6 +6,7 @@ function [outputstruct, equalcosts] = removeandrestore(mpc, set_buses, buses_to_
 define_constants;
 cutlines = [];
 removedbuses = [];
+rng('shuffle')
 if set_buses
 
     for i=1:size(buses_to_remove, 2)
