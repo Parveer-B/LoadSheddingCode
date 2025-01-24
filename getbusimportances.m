@@ -1,3 +1,14 @@
+%remove the loop, just run 1 case with inputted TL's and buses removed
+%do the full remove and restore
+%in the original file create a sliced mpc.bus and mpc.branch with just bus
+%id's and importance
+%then here just output datastruct with case info, and the added importance
+%of each bus (preferably in one struct)
+
+%get values for items remove from python
+%Then do what i'm doing with TL's added
+%
+
 fid = fopen('casess.csv', 'rt');
 mpc = loadcase('case9.m');
 outages = textscan(fid, '%s', 'Delimiter', '\n'); %load outages as a cell array

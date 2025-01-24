@@ -23,15 +23,21 @@ for i=1:size(buses_to_remove, 2)
     mpc.bus(rowtoremove,:) = [];      
 end 
 
-branchespy = py.numpy.array(mpc.branch(:,1:2));
-buslist = py.numpy.array(mpc.bus(:,1));
-islanding = py.islanding.test_islanding(branchespy, buslist);
+branches = mpc.branch(:, 1:2);        
+buslist = mpc.bus(:, 1); 
+islanding = test_islanding(branches, buslist);
 islands = reshape(cell(islanding), [size(islanding, 2), 1]);
 
-for i=1:size(islands,1)
-   cq = cell(islands{i,1});
-   islands{i,1} = [cq{:}]; %converting python stuff to matlab stuff
-end
+%old python stuff that doens't work anymore
+% branchespy = py.numpy.array(mpc.branch(:,1:2));
+% buslist = py.numpy.array(mpc.bus(:,1));
+% islanding = py.islanding.test_islanding(branchespy, buslist);
+% islands = reshape(cell(islanding), [size(islanding, 2), 1]);
+% 
+% for i=1:size(islands,1)
+%    cq = cell(islands{i,1});
+%    islands{i,1} = [cq{:}]; %converting python stuff to matlab stuff
+% end
 
 %After this section, we have removed all the buses and seperated everything
 %into islands
